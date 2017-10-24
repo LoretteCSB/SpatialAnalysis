@@ -1,0 +1,165 @@
+
+\documentclass[]{article}
+\usepackage{amsmath,amssymb,color}
+
+%opening
+\title{Analysis Spatial pattern}
+\author{Lorette Noiret}
+
+\begin{document}
+
+\maketitle
+\section{Study goals}
+\subsection{Aims}
+Understand the spatio-temporal pattern of gene expression and the link this pattern with the phenotypes (pattern of lamination...). \\
+In a first step, we are focusing on each time point separately. This step should also help to identify regions that will be used for single-cell analyses.
+\begin{itemize}
+	\item Identifiation of the regions.
+	\begin{itemize}
+		\item How many regions can we identify? 
+		\item Should we identify the regions manually (contouring) or automatically?
+		\item Should we identify the region based on gene expressions (descritptive analysis, clusetering) or based the phenotypic pattern (PLS?)?
+		\item is it necessary to apply a mask (defined manually) to find those regions (e.g. exclusion cuticule)? Yohanns also suggested to create a mask automatically (by selecting x number of pixels around the `zero area')
+		\item should we average the expression of a specific gene in several animals or only consider one animal at a time?
+	\end{itemize}
+	\item Analyse the pattern of some key gene expression. 
+		\begin{itemize}
+		\item which genes are co-expressed together in each region? Clustering is useful to better understand the pattern even if we do not use the results for the single-cell analysis. 
+		\item do the pattern of gene expression (spatial organization of cluster) correlate with the phenotypic pattern?
+	\end{itemize}
+\end{itemize}
+Other ideas:\\
+Compare the gene expression profiles with the fly  of different size. \\
+
+
+
+\section{Step1 - Spatial analysis at 12apf}
+
+\subsection{Data}
+Genes express in the notum at 12apf.\\
+\newline
+Source directory: `Patt\_CellProp\_Rescaled\_2017\_sept\_06th\_test\_raw\_data'.\\
+\newline
+Initial dataset:
+\begin{itemize} 
+\item Yohanns and Maria selected 10 genes of interest (ara, BH1, bi, esg, eyg, hth, pct, sd, Sr, Ush) measured in 10 individuals. {\color{blue} Better understand the limitations associated with data acquisation : expression, max projection, stiching...}
+\item Some phenotypic map are also available (Delamination, proliferation,TissueDeform,TissueStress)
+\item a file contains the macrocheataetae
+\end{itemize}\\
+Comments and challenges associated with these data:
+\begin{itemize}
+	\item The gene barH1 (bh1) was measured on a smaller notum, so comparisons we should perform the clustering with and without it and compare the results
+	\item Nothing tell us that those genes are the one explaining the spatial phenotypic organization (at that time point). Maybe a PLS before clustering could be useful (more than a PCA)
+	\item Should we pool the data from several animals?
+	\item Image includes the growing cuticule, should we exclude it (by applying a mask delimited by Maria or an automatic approach) 	 
+\end{itemize}
+%{\color{blue} Some genes initially mentioned are not inc}
+\subsection{Statistical Analysis}
+\subsubsection{Workflow}
+\begin{enumerate}
+	\item read image
+	\item Apply mask (only if UseMask==1)
+	\item Normalize each image on 0-1 scale (divide all the pixel by the maximum intensity value). {\color{blue} Impact normalization?}
+	\item vectorize image
+	\item {TO DO: impact if we do a PCA before hand?}
+	\item remove unwanted (if pixel=0 on all image then it is a background point and I can exclude it to make the code faster)
+	\item k-mean 2 to 10 clusters (max iteration 1000). 
+	\begin{itemize}
+		\item Use 3 to 5 replicates to insure that we find a global minimum.
+		\item Assess quality clustering: silhouette (how well each object lies within cluster), but not doable of full-size image. BIC but based on log-likelihood (gaussian assumption seems wrong). Wilks statistics 
+		
+	\end{itemize} 
+\end{enumerate}
+\subsubsection{Smoothing}
+The images have taken in high resolution and the nucleus are apparent (black area). We should try to do some interpolation before clustering?
+\begin{itemize}
+	\item Smoothing data: using gaussian filter or another one 
+	\item resize: decrease the image size with a filter (resizem). Advantage: faster computation, can compute silhouette. 
+	\item kriging: spatial interpolation, can take into account anisotropie and discontinuity {\color{blue} TO DO, available in Matlab?? }
+\end{itemize}(filtering, resize or kriging)?\\
+Challenges: how to choose the optimal parameters (sigma/distance for gaussian filter, scaling and filter for resizing)?\\
+Smoothing with a distance of 15 pixels remove completely the discountinuous aspects, but also blur the small patterns (becoming non-apparent when create the clusters).
+\subsubsection{Automatic detection of cluster (methods)}
+Different approach can be tested:
+\begin{itemize}
+	\item Hierarchical approach (AHC): tried it but matlab memory bugged. Maybe I did something wrong or should implement it in Python?
+	\item Kmeans
+	{\color{blue} I tried euclidian distance, but could try other metric as well. Ask bioinformatician if some metric works better with gene expression }
+	\item Kmedoid: interest if we look at the expression qualitatively (expressed / not expressed). Advantage: center of class is a datapoint (use L1 metric). {\color{blue} TO DO, available in matlab}
+	\item {\color{blue}Quid of spatial clustering. Some approach must exist, check litterature}
+\end{itemize}
+\paragraph{kmeans}
+
+To identify the regions, we classify the 10 genes expression map using a k-means algotithm (from 2 to 10 clusters). \\
+How to determine the optimal number of cluster?
+\begin{itemize}
+	\item Compare pattern with the one defined by Maria
+	\item Look at some automatic features:
+		\begin{itemize}
+			\item silhouette
+			\item Wilks statistic, variance within cluster, distance between centroids
+			\item Stability : how robust a clustering solution is under pertubation or sub-sampling
+			\item 
+		\end{itemize} 
+\end{itemize} 
+Other technical aspects
+	\begin{itemize}
+		\item Number of repeats: kmeans with n groups performed several times to limit the impact of centroids inititialization. I took 3, maybe should go up to 5.
+		\item Choice metric. Only tested euclidian so far
+		\item Choice color for clusters. Choice of color makes a difference in term of vizualization and apparent quality of clusters 
+	\end{itemize}
+\noindent {\bf Open questions (to discuss):}
+\begin{itemize}
+\item Data are not continuous (cells border). Should we smooth the image first?
+\item Should we consider another algorithm? I initially tried hierarchical cluster analysis, but the size was to large, and Matlab crashes. Is there a better way to do it (another sotware? another algorithm?)?
+\end{itemize} 
+\subsubsection{Other points}
+{\color{blue} Does a preliminary PCA change the results?
+Rather than PCA, PLS could help?}\\
+
+\subsubsection{Classification approach}
+
+\subsection{Results}
+\subsubsection{Descriptive analysis}
+Visually description of the pattern of each gene and phenotype.\\
+
+\begin{tabular}{@{}p{0.15\linewidth}p{0.3 \linewidth}p{0.65\linewidth}}%{l|c|c}
+name&some functions&comments\\ \hline
+ara (araucan)&TF, notum cell fate specification&	expressed latterally (except 2 zones ({\color{blue}wings or another phenotype later?}), midline +/- empty, a few intense spots\\ 
+%
+bh1 (BarH1)&TF, chaeta morphogenesis; compound eye photoreceptor cell differentiation& Fly is much smaller $\rightarrow$ {\color{red} problem?}, opposition posterior/anterior, only expressed in region clode to neck + few spot close to scutellum\\
+%
+bi (Bifid)& TF, development of several tissues such as brain, eyes and wings&pattern both vertical and horizontal. More expressed in scutellum, 3 empty spots in vertical middle, problem stitching?\\
+%
+esg (Escargot)& TF, maintenance of cell number&scutellum except 2 spots and along horizontal axis ({\color{blue} physio?})\\
+%
+eyg (eyegone)& TF (transcriptional repressor), notum development&not in scutelum, pattern not uniform in scutum (vertical pattern),{\color{blue} true or artefact?}  \\
+%
+hth (homothorax)& TF, phenotypes manifest in adult abdominal segment, regulation of cell fate commitment; macromolecule localization, formation of anatomical boundary&{\color{blue}signal seems noisy},scutellum, 2 patch in lateral scutum\\
+ptc (patched)& hedgehog receptor activity, cell morphogenesis involved in differentiation; columnar/cuboidal epithelial cell differentiation & expressed on the two posterior/anterior lines, ({\color{blue}neck}\\
+%
+sd (scalloped)& TF,tissue morphogenesis; regulation cell communication, regul multicellular organismal development, stem cell proliferation&essential posterior line\\
+%
+Sr (stripe)&nucleic acid binding, epithelial cell migration, ectoderm development, determination of muscle attachment site&parallel horizontal strip in scutum\\
+%
+Ush (u-shaped)& TF binding,leading edge cell differentiation, pattern, epithelial cell fate commitment specification process&everywhere except lateral border and 2 spots in scutellum\\
+%
+Delamination &&scutellum and horizontal midline \\
+Proliferation&&scutellum, horizontal midline + parallel stripe in scutum\\
+Deformation  &&\\
+Stress       &&\\
+\end{tabular}
+\\
+\newline
+TF = transcription factor\\
+Comments:
+\begin{itemize} 
+\item ask Boris to describe Deformation and stress\\
+\item No phenotypic region correspond to the empty lateral spots and 2 spot in scutellum.
+\end{itemize}
+\subsubsection{Clustering analysis}
+\paragraph{Using raw data or the mask?}
+Le noir et 20 en plus 
+\paragraph{Manual versus automatic}
+%faire : PCA
+\end{document}
