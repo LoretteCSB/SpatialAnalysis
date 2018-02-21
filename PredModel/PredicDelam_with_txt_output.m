@@ -7,7 +7,7 @@ load([dirdata,filedata])
 clear Folder* dirdata fileout
 
 dirout='/Users/Lorette/Google Drive/YohannsBellaiche/Spatial analysis/results/PredicPhysio/Model/';
-fileout_txt='ExperimentSummaryDivision.txt';
+fileout_txt='ExperimentSummaryDelam.txt';
 
 
 gene_excl = {'caup','hth','DIAP1','fz3','mirr','exd','sd','wg'};%sd,wg
@@ -25,7 +25,7 @@ list_meth_selec_lambda  = {'1SE';'MaxFeature'}';
 max_feature=10;
 type_model='lasso';
 
-nsimu=0;
+
 
 % ---------- Gene Activated or not
 for MethGene01 = {num2str(cutoff_gene),'ManualImage-Yohanns','AutomaticVarianceBased-Stephane'}
@@ -43,7 +43,7 @@ for MethGene01 = {num2str(cutoff_gene),'ManualImage-Yohanns','AutomaticVarianceB
     end
     
     % ----------- Include interactions between pair of genes 
-    for Interact01=1:0
+    for Interact01=0:1
         
         [nl,~] = size(array_list_gene_excl);
         
@@ -59,8 +59,9 @@ for MethGene01 = {num2str(cutoff_gene),'ManualImage-Yohanns','AutomaticVarianceB
             mask = (minAR==1) .* (Phys_vect(:,3)==1);% 1 if area ratio =1 and y has a value
             
             X = Gene_bin(mask==1,ia)+0;
-            y = Phys_vect(mask==1,1)+0;
             
+            y = Phys_vect(mask==1,2)+0;% column for apoptosis
+            kill = x2fx_names(list_gene,'interaction')';
             % Create interaction terms
             if Interact01==1
                 X=x2fx(X,'interaction');
@@ -89,10 +90,8 @@ for MethGene01 = {num2str(cutoff_gene),'ManualImage-Yohanns','AutomaticVarianceB
             %% Generate models for various prenalty parameter lambda
             rand('seed', 19479);
             [B,FitInfo] = lasso(Xtrain,ytrain,'CV',10);%,'PredictorNames',list_gene_incl);
-            [ax,figh]=lassoPlot(B,FitInfo,'PlotType','CV');%  green circle ==> |Lambda| with minimum cross-validation error.
-            % saveas(figh,[dirout,'Lambda_lasso_Interact',MethGene01,num2str(Interact01),'_',num2str(nsimu)])
-            % nsimu=nsimu+1;
-            %}
+            %[ax,figh]=lassoPlot(B,FitInfo,'PlotType','CV');%  green circle ==> |Lambda| with minimum cross-validation error.
+            
             
             % BEST MODEL - weight, R2, nb of variables selected
             for meth =list_meth_selec_lambda
