@@ -1,5 +1,5 @@
-function WriteResultModel(filedata,dirout,fileout_txt,list_gene,list_gene_excl,Interact01,...
- MethGene01,myseed, type_model,meth,best_lambda,MSE,size_sets,...
+function WriteResultModel(filedata,dirout,notum,fileout_txt,list_gene,list_gene_excl,Interact01,...
+ MethGene01,myseed,myseed2, type_model,meth,best_lambda,MSE,size_sets,...
  n_var_selected,TableParaOpti,Weight_Intercept,R2train,R2adjtrain,pct_err_train_within10,pct_err_train_within20,pct_err_test_within10,pct_err_test_within20)
 
 
@@ -13,18 +13,22 @@ if exist([fileout],'file')==2
     
 else % if file does not exist, add header
     fileID = fopen(fileout,'w');
-    fprintf(fileID,'Date \t DataPath \t Var_Incl \t Var_Excl \t Interact01 \t MethToBinarize \t seed \t Model \t TypeLambda \t lambda \t size(train,test) \tn_var_select \t Var_select \t Weight \t Intercept \t MSE_train \t R2_train \t R2adj_train \t pct_err_train_within10 \t pct_err_train_within20  \t pct_err_test_within10 \t pct_err_test_within20 \n') ;   
+    fprintf(fileID,'Date \t DataPath \t Notum \t Var_Incl \t Var_Excl \t Interact01 \t MethToBinarize \t seed\t seed2 \t Model \t TypeLambda \t lambda \t size(train,test) \tn_var_select \t Var_select \t Weight \t Intercept \t MSE_train \t R2_train \t R2adj_train \t pct_err_valid_within10 \t pct_err_valid_within20  \t pct_err_test_within10 \t pct_err_test_within20 \n') ;   
 end
 
 
 temp = list_gene';
 fprintf(fileID,'%s\t',datetime('now'));
 fprintf(fileID,'%s\t',filedata);
+fprintf(fileID,'%s\t',notum);
+
 fprintf(fileID,'%s,' ,list_gene{:})     ;fprintf(fileID,'\t');
 fprintf(fileID,'%s,' ,list_gene_excl{:});fprintf(fileID,'\t');
 fprintf(fileID,'%d\t',Interact01); 
 fprintf(fileID,'%s\t' ,MethGene01);
 fprintf(fileID,'%f\t',myseed); 
+fprintf(fileID,'%f\t',myseed2); 
+
 fprintf(fileID,'%s\t',type_model); 
 fprintf(fileID,'%s\t',meth); 
 fprintf(fileID,'%s\t',best_lambda); 
